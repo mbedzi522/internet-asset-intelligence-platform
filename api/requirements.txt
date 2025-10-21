@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+opensearch-py
+PyJWT
+
+
+
+slowapi
+
+
+prometheus_client
+

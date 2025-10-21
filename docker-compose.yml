@@ -1,0 +1,115 @@
+
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    volumes:
+      - minio_data:/data
+
+  opensearch:
+    image: opensearchproject/opensearch:2.12.0
+    container_name: opensearch
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - discovery.type=single-node
+      - plugins.security.disabled=true # Disable security for local dev
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m # Adjust memory as needed
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600" # Required for OpenSearch performance analyzer
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s --insecure -u admin:admin https://localhost:9200/_cluster/health | grep -q \"\"status\":\"green\"\"]"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  collector:
+    build:
+      context: ./collector
+      dockerfile: Dockerfile
+    environment:
+      COLLECTOR_CONFIG_PATH: /app/config.yaml
+      # MINIO_ENDPOINT: http://minio:9000 # Use service name for inter-container communication
+    volumes:
+      - ./collector/config.yaml:/app/config.yaml
+      - ./collector/dev_signer.key:/app/dev_signer.key # Mount dev key
+      - ./collector/outbox:/app/outbox # For simulated uploads
+    depends_on:
+      minio:
+        condition: service_healthy
+    command: ["./collector"]
+
+  ingest:
+    build:
+      context: ./ingest
+      dockerfile: Dockerfile
+    environment:
+      OBJECT_STORE_ENDPOINT: minio:9000
+      OBJECT_STORE_ACCESS_KEY: minioadmin
+      OBJECT_STORE_SECRET_KEY: minioadmin
+      OBJECT_STORE_BUCKET: asset-events
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: 9200
+      OPENSEARCH_USER: admin
+      OPENSEARCH_PASSWORD: admin
+      PUBLIC_KEYS_PATH: /app/public_keys.json # Placeholder
+      GEOIP_DB_PATH: /app/geoip/GeoLite2-City.mmdb # Mount GeoIP DB here
+      CVE_RULES_PATH: /app/cve_rules.yaml
+    volumes:
+      - ./ingest/cve_rules.yaml:/app/cve_rules.yaml
+      - ./ingest/archive:/app/archive
+      - ./ingest/public_keys.json:/app/public_keys.json # Mount public keys
+    depends_on:
+      minio:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: 9200
+      OPENSEARCH_USER: admin
+      OPENSEARCH_PASSWORD: admin
+      JWT_SECRET_KEY: super-secret-key
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_BASE_URL: http://localhost:8000 # Adjust if API is on different host
+    depends_on:
+      api:
+        condition: service_started # frontend only needs API to be started, not necessarily healthy
+
+volumes:
+  minio_data:
+  opensearch_data:
+

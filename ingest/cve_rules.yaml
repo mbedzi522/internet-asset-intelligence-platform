@@ -1,0 +1,16 @@
+
+- cve_id: CVE-2023-1234
+  severity: HIGH
+  description: "Vulnerability in Nginx 1.14 allowing remote code execution."
+  server_regex: "nginx/1\.14"
+
+- cve_id: CVE-2023-5678
+  severity: MEDIUM
+  description: "Weak SSH ciphers enabled in OpenSSH 7.x."
+  ssh_banner_regex: "OpenSSH_7\.[0-9]"
+
+- cve_id: CVE-2024-0001
+  severity: CRITICAL
+  description: "Example critical vulnerability in Apache httpd 2.4.x"
+  server_regex: "Apache/2\.4\.[0-9]+"
+

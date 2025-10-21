@@ -1,0 +1,28 @@
+
+allowed_cidrs:
+  - "127.0.0.0/8"
+  - "10.0.0.0/8"
+  - "172.16.0.0/12"
+  - "192.168.0.0/16"
+allow_public_targets: false
+public_scan_consent: ""
+require_poa_for_public: true
+ports:
+  - 80
+  - 443
+  - 22
+probe_types:
+  - "tcp"
+  - "http"
+  - "tls"
+  - "ssh-banner"
+dev_signer_key_path: "./dev_signer.key"
+object_store:
+  endpoint: "http://localhost:9000" # Placeholder for MinIO or S3
+  bucket: "asset-events"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+concurrency: 10
+rate_limit_per_target: 1
+global_rate_limit: 100
+

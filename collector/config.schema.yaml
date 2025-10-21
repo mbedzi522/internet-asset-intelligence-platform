@@ -1,0 +1,80 @@
+
+# Schema for collector configuration
+
+type: object
+properties:
+  allowed_cidrs:
+    type: array
+    items:
+      type: string
+    description: List of CIDR ranges allowed for scanning. Defaults to RFC1918 and loopback.
+  allow_public_targets:
+    type: boolean
+    default: false
+    description: Whether scanning of public IP addresses is allowed.
+  public_scan_consent:
+    type: string
+    default: ""
+    description: A strong token required for public scans, provided by the operator.
+  require_poa_for_public:
+    type: boolean
+    default: true
+    description: Whether a Proof of Authorization (POA) document is required for public scans.
+  ports:
+    type: array
+    items:
+      type: integer
+    description: List of ports to probe.
+  probe_types:
+    type: array
+    items:
+      type: string
+      enum: ["tcp", "http", "tls", "ssh-banner", "ftp-banner"]
+    description: List of probe types to use.
+  signer_key_vault_path:
+    type: string
+    description: Path to fetch the Ed25519 signing key from HashiCorp Vault in production.
+  dev_signer_key_path:
+    type: string
+    description: Path to a local Ed25519 signing key file for development.
+  object_store:
+    type: object
+    properties:
+      endpoint:
+        type: string
+      bucket:
+        type: string
+      access_key:
+        type: string
+      secret_key:
+        type: string
+    required: [endpoint, bucket, access_key, secret_key]
+    description: Configuration for S3-compatible object storage.
+  kafka:
+    type: object
+    properties:
+      brokers:
+        type: array
+        items:
+          type: string
+      topic:
+        type: string
+    required: [brokers, topic]
+    description: Configuration for Kafka message queue (optional).
+  concurrency:
+    type: integer
+    default: 100
+    description: Maximum number of concurrent probes.
+  rate_limit_per_target:
+    type: integer
+    default: 0
+    description: Rate limit per target IP in probes per second (0 for no limit).
+  global_rate_limit:
+    type: integer
+    default: 0
+    description: Global rate limit across all targets in probes per second (0 for no limit).
+required:
+  - allowed_cidrs
+  - ports
+  - probe_types
+

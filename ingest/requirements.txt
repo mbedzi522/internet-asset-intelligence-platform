@@ -1,0 +1,7 @@
+minio
+opensearch-py
+PyNaCl
+geoip2
+cryptography
+pyyaml
+
