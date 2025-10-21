@@ -27,3 +27,13 @@ Refer to `SECURITY.md` for information on security practices and responsible dis
 ## License
 
 This project is licensed under the [LICENSE](LICENSE) file.
+
+
+## Key Contributors
+
+- **Tshivhidzo (Moss) Mbedzi**
+  - Founder & Director of MCP Labs
+  - Specializes in AI Automation & MCP Systems, building without code using AI.
+  - Education: IIE Rosebank College, Pretoria, Gauteng, South Africa.
+  - LinkedIn: [Tshivhidzo (Moss) Mbedzi](https://www.linkedin.com/in/tshivhidzo-moss-mbedzi-b8a9b717b/)
+
