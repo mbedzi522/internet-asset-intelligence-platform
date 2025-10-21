@@ -26,52 +26,47 @@ const getRiskColor = (score: number): string => {
 const ResultsList: React.FC<ResultsListProps> = ({ results, onSelectDevice }) => {
   return (
     <div className="results-list">
-      <h2>Search Results ({results.length})</h2>
-      <div className="results-table-container">
-        <table className="results-table">
-          <thead>
-            <tr>
-              <th>IP Address</th>
-              <th>Port</th>
-              <th>Protocol</th>
-              <th>Risk Score</th>
-              <th>Timestamp</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((device) => (
-              <tr key={device.id}>
-                <td className="ip-cell">{device.ip}</td>
-                <td>{device.port}</td>
-                <td>{device.protocol}</td>
-                <td>
-                  <div
-                    className="risk-score"
-                    style={{
-                      backgroundColor: getRiskColor(device.risk_score),
-                      color: 'white',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {device.risk_score}
-                  </div>
-                </td>
-                <td className="timestamp">{new Date(device.timestamp).toLocaleString()}</td>
-                <td>
-                  <button
-                    className="detail-button"
-                    onClick={() => onSelectDevice(device.id)}
-                  >
-                    View Details
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="results-grid">
+        {results.map((device) => (
+          <div
+            key={device.id}
+            className="result-card"
+            onClick={() => onSelectDevice(device.id)}
+          >
+            <div className="card-header">
+              <div className="ip-address">{device.ip}</div>
+              <div
+                className="risk-badge"
+                style={{ backgroundColor: getRiskColor(device.risk_score) }}
+              >
+                Risk: {device.risk_score}
+              </div>
+            </div>
+
+            <div className="card-body">
+              <div className="info-row">
+                <span className="label">Port:</span>
+                <span className="value">{device.port}</span>
+              </div>
+              <div className="info-row">
+                <span className="label">Protocol:</span>
+                <span className="value protocol">{device.protocol}</span>
+              </div>
+              <div className="info-row">
+                <span className="label">Last Seen:</span>
+                <span className="value timestamp">
+                  {new Date(device.timestamp).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="card-footer">
+              <button className="details-link">
+                View Details →
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

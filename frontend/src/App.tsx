@@ -1,131 +1,77 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
-import SearchBar from './components/SearchBar';
-import ResultsList from './components/ResultsList';
-import DeviceDetail from './components/DeviceDetail';
-
-interface Device {
-  id: string;
-  timestamp: string;
-  ip: string;
-  port: number;
-  protocol: string;
-  probes: Record<string, any>;
-  enrichment: Record<string, any>;
-  risk_score: number;
-  risk_breakdown: Record<string, number>;
-}
+import Search from './pages/Search';
+import Explore from './pages/Explore';
+import Filters from './pages/Filters';
+import Account from './pages/Account';
 
 const App: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<Device[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [authToken] = useState<string | null>(localStorage.getItem('authToken'));
-  // Placeholder for authentication
-  useEffect(() => {
-    if (!authToken) {
-      // Redirect to login or show login modal
-      console.log('No auth token found. User should log in.');
-    }
-  }, [authToken]);
+  return (
+    <Router>
+      <div className="app">
+        <Header />
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<Search />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/filters" element={<Filters />} />
+            <Route path="/account" element={<Account />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
+};
 
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    setLoading(true);
-    setError(null);
-    setSelectedDevice(null);
+const Header: React.FC = () => {
+  const location = useLocation();
 
-    try {
-      const response = await fetch('http://localhost:8000/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken || 'dummy_user_token'}`, // Placeholder token
-        },
-        body: JSON.stringify({
-          query: query,
-          page: 1,
-          size: 10,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data: Device[] = await response.json();
-      setResults(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSelectDevice = async (deviceId: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`http://localhost:8000/device/${deviceId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${authToken || 'dummy_user_token'}`, // Placeholder token
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data: Device = await response.json();
-      setSelectedDevice(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
+  const isActive = (path: string) => {
+    return location.pathname === path ? 'active' : '';
   };
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Internet Asset Intelligence Platform</h1>
-        <p>Search and analyze internet-facing assets</p>
-      </header>
+    <header className="app-header">
+      <div className="header-content">
+        <Link to="/" className="logo">
+          <span className="logo-icon">🔍</span>
+          <span className="logo-text">AssetScan</span>
+        </Link>
+        <nav className="header-nav">
+          <Link to="/" className={`nav-link ${isActive('/')}`}>
+            Search
+          </Link>
+          <Link to="/explore" className={`nav-link ${isActive('/explore')}`}>
+            Explore
+          </Link>
+          <Link to="/filters" className={`nav-link ${isActive('/filters')}`}>
+            Filters
+          </Link>
+          <Link to="/account" className={`nav-link ${isActive('/account')}`}>
+            Account
+          </Link>
+        </nav>
+      </div>
+    </header>
+  );
+};
 
-      <main className="app-main">
-        <SearchBar onSearch={handleSearch} />
-
-        {error && <div className="error-message">{error}</div>}
-        {loading && <div className="loading-message">Loading...</div>}
-
-        <div className="results-container">
-          {selectedDevice ? (
-            <DeviceDetail device={selectedDevice} onBack={() => setSelectedDevice(null)} />
-          ) : (
-            <>
-              {results.length > 0 && (
-                <ResultsList results={results} onSelectDevice={handleSelectDevice} />
-              )}
-              {results.length === 0 && !loading && searchQuery && (
-                <div className="no-results">No results found for "{searchQuery}"</div>
-              )}
-            </>
-          )}
+const Footer: React.FC = () => {
+  return (
+    <footer className="app-footer">
+      <div className="footer-content">
+        <p>AssetScan Intelligence Platform • Powered by OpenSearch</p>
+        <div className="footer-links">
+          <a href="#">API Docs</a>
+          <a href="#">Terms</a>
+          <a href="#">Privacy</a>
+          <a href="#">Support</a>
         </div>
-      </main>
-
-      <footer className="app-footer">
-        <p>&copy; 2025 Internet Asset Intelligence Platform. All rights reserved.</p>
-      </footer>
-    </div>
+      </div>
+    </footer>
   );
 };
 
 export default App;
-

@@ -7,13 +7,13 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN npm install -g pnpm && pnpm install
+# Install pnpm globally and install dependencies with build scripts enabled
+RUN npm install -g pnpm && pnpm config set enable-pre-post-scripts true && pnpm install --shamefully-hoist
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application using pnpm
 RUN pnpm build
 
 # Production stage using Nginx

@@ -26,18 +26,27 @@ services:
       - cluster.name=opensearch-cluster
       - node.name=opensearch-node1
       - discovery.type=single-node
-      - plugins.security.disabled=true # Disable security for local dev
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m # Adjust memory as needed
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - opensearch_data:/usr/share/opensearch/data
     ports:
       - "9200:9200"
       - "9600:9600" # Required for OpenSearch performance analyzer
     healthcheck:
-      test: ["CMD-SHELL", "curl -s --insecure -u admin:admin https://localhost:9200/_cluster/health | grep -q \"\"status\":\"green\"\"]"]
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 10
 
   collector:
     build:
@@ -67,7 +76,7 @@ services:
       OPENSEARCH_HOST: opensearch
       OPENSEARCH_PORT: 9200
       OPENSEARCH_USER: admin
-      OPENSEARCH_PASSWORD: admin
+      OPENSEARCH_PASSWORD: MyStrongP@ssw0rd!2025#Secure
       PUBLIC_KEYS_PATH: /app/public_keys.json # Placeholder
       GEOIP_DB_PATH: /app/geoip/GeoLite2-City.mmdb # Mount GeoIP DB here
       CVE_RULES_PATH: /app/cve_rules.yaml
@@ -86,12 +95,12 @@ services:
       context: ./api
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       OPENSEARCH_HOST: opensearch
       OPENSEARCH_PORT: 9200
       OPENSEARCH_USER: admin
-      OPENSEARCH_PASSWORD: admin
+      OPENSEARCH_PASSWORD: MyStrongP@ssw0rd!2025#Secure
       JWT_SECRET_KEY: super-secret-key
     depends_on:
       opensearch:
@@ -102,12 +111,26 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
-      REACT_APP_API_BASE_URL: http://localhost:8000 # Adjust if API is on different host
+      REACT_APP_API_BASE_URL: http://localhost:8001 # Adjust if API is on different host
     depends_on:
       api:
         condition: service_started # frontend only needs API to be started, not necessarily healthy
+
+  scanner:
+    build:
+      context: ./scanner
+      dockerfile: Dockerfile
+    environment:
+      SCAN_RATE: 50 # IPs per second (start conservatively)
+      SCAN_TIMEOUT: 2.0 # Connection timeout in seconds
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: 9200
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   minio_data:
